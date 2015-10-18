@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="application-name" content="mndks">
+    <title>mndks</title>
+    <style>
+#mymemo {
+  text-align: center;
+}
+
+input[type="submit"] {
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  width: 220px;
+  height: 24px;
+  font: 14px "Hiragino Kaku Gothic ProN";
+  border: none;
+  opacity: 0.5;
+}
+    </style>
+  </head>
+
+  <body>
+    <div id="mymemo">
+      <input type="submit" value="mndks" id="mndks">
+    </div>
+    <script>
+(function(x) {
+  var conf;
+
+  conf = {
+    url: [
+      {
+        pattern: /\.pdf$/i,
+        url: 'cg[@]'
+      }, {
+        pattern: /\.(?:wmv|rm|mov|mp4|mpg|m2ts|ts|avi|ogv|ogm|mkv|webm|flv|3gp|vob|divx)$/i,
+        url: 'vlc://[@]'
+      }, {
+        pattern: /^http:\/\/[^/]+\.(?:2ch\.net|2ch\.sc|bbspink\.com|machi\.to)\//,
+        url: 'twinkle2ch[@!]'
+      }, {
+        pattern: /^https?:\/\/[^/]+\.wikipedia\.org\//,
+        url: 'wplink[@!]'
+      }, {
+        pattern: /^(?:https?:\/\/[^/]*twitter\.com\/[^/]+\/status\/|twitter:\/\/status\?status_id=)(\d+)/,
+        url: 'twitter://status?status_id=(@1)'
+      }, {
+        pattern: /^(?:https?:\/\/[^/]*twitter\.com\/intent|twitter:\/)\/user\?screen_name=(\w+)/,
+        url: 'twitter://user?screen_name=(@1)'
+      }, {
+        pattern: /^https?:\/\/([^/]+).tumblr\.com\/post\/(\d+)\//,
+        url: 'tumblr://x-callback-url/blog?blogName=(@1)&postID=(@2)'
+      }, {
+        pattern: /^https?:\/\/[^/]+\.pixiv\.net\/.*?illust_id=(\d+)/,
+        url: 'pixitail://org.cathand.pixitail/pixiv/(@1)'
+      }, {
+        pattern: /^https?:\/\/(?:[^/]+\.nicovideo\.jp\/watch|nico\.ms)\/((?:s[mo]|nm)\w+)/,
+        url: 'niconico://play?vid=(@1)'
+      }, {
+        pattern: /^http/,
+        url: 'safari[@]'
+      }, {
+        pattern: /./,
+        url: '[@]'
+      }
+    ],
+    text: [
+      {
+        pattern: /^\u3012?\d\d\d-\d\d\d\d|^-?\d+(?:\.\d+)[ ,]-?\d+(?:\.\d+)|[\u5e02\u753a\u6751].+[\u4e01\u756a]/,
+        url: 'comgooglemaps://?q=<@>'
+      }, {
+        pattern: /^#((?:s[mo]|nm)\w+)/,
+        url: 'niconico://play?vid=(@1)'
+      }, {
+        pattern: /.{17,}|\n/,
+        url: 'tumblr://x-callback-url/text?body=<@>&tags=memo'
+      }, {
+        pattern: /./,
+        url: 'safarihttp://www.google.com/search?q=<@>'
+      }
+    ]
+  };
+
+  function expand(list, str) {
+    var url, a, i, m, n;
+
+    url = null;
+
+    for (i = 0, n = list.length; i < n; i++) {
+      a = list[i];
+      m = str.match(a.pattern);
+
+      if (m !== null) {
+        url = a.url.replace(/\(@(\d+)\)/g, function() {
+          return m[RegExp.$1];
+        }).replace(/<@>/, encodeURIComponent(str));
+        break;
+      }
+    }
+
+    return url;
+  }
+
+  function getHugeURL(url) {
+    var xhr, hugeurl;
+
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'http://ux.nu/hugeurl?url=' + encodeURIComponent(url), false);
+      xhr.send(null);
+      hugeurl = xhr.responseText;
+      hugeurl = hugeurl.length === 0 ? url : decodeURIComponent(hugeurl);
+
+      return hugeurl;
+  }
+
+  function mndks() {
+    var str, url;
+
+    str = x.replace(/^\s+/, '').replace(/\s+$/, '');
+
+    if (/^\w[\w-.]*:/.test(str)) {
+      if (str.length < 32 && str.indexOf('http') === 0 && str.indexOf('/', 9) < 22) {
+        str = getHugeURL(str);
+      }
+
+        url = expand(conf['url'], str);
+
+        if (url !== null) {
+          url = url.replace(/\[@\]/, str)
+                  .replace(/\[@!\]/, str.replace(/^http/, ''))
+                  .replace(/\[@\?\]/, str.replace(/^https?/, ''))
+                  .replace(/\{@\}/, encodeURI(str));
+        }
+    } else {
+      url = expand(conf['text'], str);
+    }
+
+    if (url !== null) {
+      location.href = url;
+    }
+  }
+
+  document.getElementById('mndks').addEventListener('click', mndks, false);
+})(CLIPBOARD);
+    </script>
+  </body>
+
+</html>
